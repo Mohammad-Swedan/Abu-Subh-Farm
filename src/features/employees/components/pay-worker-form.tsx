@@ -162,6 +162,7 @@ export function PayWorkerForm({
     setValue("employeeId", value)
     const next = employees.find((e) => e.id === value) ?? null
     const current = getValues("amountFils")
+    let gross = current ?? 0
     if (next && (current === null || current === 0)) {
       const suggested =
         next.payType === "MONTHLY"
@@ -169,7 +170,14 @@ export function PayWorkerForm({
           : next.dailyRateFils
       if (typeof suggested === "number") {
         setValue("amountFils", suggested)
+        gross = suggested
       }
+    }
+    // Auto-deduct the outstanding advance so the net pay is reduced up front.
+    if (advancesEnabled && next && next.outstandingFils > 0) {
+      setValue("deductFils", Math.min(gross, next.outstandingFils))
+    } else {
+      setValue("deductFils", null)
     }
   }
 

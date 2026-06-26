@@ -3,15 +3,18 @@ import { getCurrentUser } from "@/lib/auth";
 import { getPreferences } from "@/server/preferences";
 import { PageHeader } from "@/components/shared";
 import { SettingsPreferences } from "@/components/shared/settings";
+import { CropsManager } from "@/features/crops/components/crops-manager";
+import { listAllCrops } from "@/features/crops/server/crops.repository";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { logoutAction } from "./actions";
 
-/** Settings — owner info, optional-feature preferences, and logout. */
+/** Settings — owner info, optional-feature preferences, crops, and logout. */
 export default async function SettingsPage() {
   const user = await getCurrentUser();
   const prefs = await getPreferences();
+  const crops = await listAllCrops();
 
   return (
     <div className="space-y-6">
@@ -43,8 +46,10 @@ export default async function SettingsPage() {
         advances={prefs.advances}
       />
 
+      <CropsManager crops={crops} />
+
       <p className="text-muted-foreground text-sm">
-        المزيد من الإعدادات (الفئات، المحاصيل، النسخ الاحتياطي) قيد الإنشاء.
+        المزيد من الإعدادات (الفئات، النسخ الاحتياطي) قيد الإنشاء.
       </p>
     </div>
   );

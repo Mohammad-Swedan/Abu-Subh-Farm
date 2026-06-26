@@ -54,7 +54,7 @@ export function MoneyInput({
   }
 
   return (
-    <div className={cn("relative w-full", className)}>
+    <div dir="ltr" className={cn("relative w-full", className)}>
       <Input
         id={id}
         inputMode="decimal"

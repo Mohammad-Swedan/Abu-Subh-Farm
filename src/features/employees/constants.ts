@@ -42,6 +42,7 @@ export const COPY = {
   monthlySalary: "الراتب الشهري",
   dailyRate: "الأجر اليومي",
   outstanding: "سُلف مستحقّة",
+  remainingSalary: "المتبقّي من الراتب",
   inactive: "غير مفعّل",
   emptyEmployeesTitle: "لا يوجد عمال بعد",
   emptyEmployeesDescription: "أضف عمّالك لتسجيل الأجور والسُّلف بسهولة.",

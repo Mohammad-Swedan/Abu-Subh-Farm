@@ -52,6 +52,13 @@ export function EmployeeList({
           payType === "MONTHLY" ? COPY.monthlySalary : COPY.dailyRate
         const due = outstanding[employee.id] ?? 0
         const showDue = advancesEnabled && due > 0
+        // For monthly workers with an outstanding advance, show what's left of
+        // the salary after the advance is taken into account.
+        const showRemaining =
+          showDue && payType === "MONTHLY" && employee.monthlySalaryFils != null
+        const remainingFils = showRemaining
+          ? Math.max(0, (employee.monthlySalaryFils ?? 0) - due)
+          : 0
 
         return (
           <button
@@ -86,6 +93,12 @@ export function EmployeeList({
                 fils={rateFils ?? 0}
                 className="text-base font-semibold text-foreground"
               />
+              {showRemaining ? (
+                <span className="flex items-center gap-1 text-xs text-expense">
+                  {COPY.remainingSalary}:
+                  <MoneyText fils={remainingFils} className="font-medium" />
+                </span>
+              ) : null}
             </div>
           </button>
         )
