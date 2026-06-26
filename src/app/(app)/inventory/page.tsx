@@ -1,17 +1,34 @@
-import { PackageIcon } from "lucide-react";
-import { PageHeader, EmptyState } from "@/components/shared";
+import { cookies } from "next/headers";
+import { requireUser } from "@/lib/auth";
+import { PageHeader } from "@/components/shared";
+import {
+  listItems,
+  listItemOptions,
+} from "@/features/inventory/server/inventory.repository";
+import { InventoryScreen } from "@/features/inventory/components/inventory-screen";
+import { COPY, STRICT_COOKIE } from "@/features/inventory/constants";
 
-/** PLACEHOLDER — replaced by the Inventory feature team. */
-export default function InventoryPage() {
+/** Inventory screen — server component. Loads the active items (+ recent history)
+ *  and the picker options, reads the per-screen strict-tracking toggle from a
+ *  cookie, and renders the client shell. Money flows as integer fils throughout. */
+export default async function InventoryPage() {
+  await requireUser();
+
+  const cookieStore = await cookies();
+  const strictMode = cookieStore.get(STRICT_COOKIE)?.value === "1";
+
+  const [items, itemOptions] = await Promise.all([
+    listItems(),
+    listItemOptions(),
+  ]);
+
   return (
-    <div className="space-y-6">
-      <PageHeader title="المخزون" description="الأسمدة والمحروقات والمواد المتوفّرة في المزرعة." />
-      <EmptyState
-        icon={PackageIcon}
-        title="المخزون فارغ"
-        description="أضف أصنافك لتتابع الكميات المتبقّية والتنبيه عند نقصها."
-        actionLabel="إضافة صنف"
-        actionHref="/inventory"
+    <div className="space-y-4">
+      <PageHeader title={COPY.title} description={COPY.subtitle} />
+      <InventoryScreen
+        items={items}
+        itemOptions={itemOptions}
+        strictMode={strictMode}
       />
     </div>
   );
