@@ -1,0 +1,179 @@
+// مزارع أبو صبح — Prisma schema (foundation; LOCKED — feature teams must NOT edit this file).
+//
+// DB-portability rules (see docs/ARCHITECTURE.md):
+//   * provider is "sqlite" for now; switching to PostgreSQL / SQL Server later is ONLY a
+//     provider + DATABASE_URL change — so we avoid anything DB-specific here.
+//   * NO Prisma enums (SQLite lacks them). Enums are modeled as TypeScript `as const` unions
+//     + Zod in src/lib/enums.ts and stored as plain String columns.
+//   * ALL money is stored as Int minor units ("fils"; 1 JOD = 1000 fils). NEVER Float for money.
+//   * ids are cuid(); timestamps are DateTime.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODELS — added by the foundation (W1). 13 models total. See docs/ARCHITECTURE.md.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  passwordHash String
+  role         String   @default("OWNER")
+  createdAt    DateTime @default(now())
+}
+
+model Category {
+  id        String  @id @default(cuid())
+  nameAr    String
+  kind      String  // "EXPENSE" | "INCOME" | "BOTH"
+  isSystem  Boolean @default(false)
+  sortOrder Int     @default(0)
+  expenses          Expense[]
+  recurringExpenses RecurringExpense[]
+  ledgerEntries     LedgerEntry[]
+}
+
+model Crop {
+  id       String  @id @default(cuid())
+  nameAr   String
+  isActive Boolean @default(true)
+  expenses      Expense[]
+  sales         Sale[]
+  ledgerEntries LedgerEntry[]
+}
+
+model LedgerEntry {
+  id         String   @id @default(cuid())
+  date       DateTime
+  direction  String   // "IN" | "OUT"
+  amountFils Int
+  scope      String   // "FARM" | "PERSONAL"
+  source     String   // "EXPENSE" | "SALE" | "SALARY" | "ADJUSTMENT"
+  refId      String?
+  categoryId String?
+  cropId     String?
+  note       String?
+  createdAt  DateTime @default(now())
+  category      Category?      @relation(fields: [categoryId], references: [id])
+  crop          Crop?          @relation(fields: [cropId], references: [id])
+  expense       Expense?
+  sale          Sale?
+  salaryPayment SalaryPayment?
+  @@index([date])
+  @@index([source])
+}
+
+model Expense {
+  id            String   @id @default(cuid())
+  date          DateTime
+  amountFils    Int
+  categoryId    String
+  scope         String   // "FARM" | "PERSONAL"
+  cropId        String?
+  vendor        String?
+  note          String?
+  ledgerEntryId String   @unique
+  createdAt     DateTime @default(now())
+  category              Category               @relation(fields: [categoryId], references: [id])
+  crop                  Crop?                  @relation(fields: [cropId], references: [id])
+  ledgerEntry           LedgerEntry            @relation(fields: [ledgerEntryId], references: [id], onDelete: Cascade)
+  inventoryTransactions InventoryTransaction[]
+}
+
+model RecurringExpense {
+  id           String    @id @default(cuid())
+  nameAr       String
+  amountFils   Int
+  categoryId   String
+  scope        String
+  dayOfMonth   Int
+  isActive     Boolean   @default(false)
+  lastPostedOn DateTime?
+  category Category @relation(fields: [categoryId], references: [id])
+}
+
+model Sale {
+  id                  String   @id @default(cuid())
+  date                DateTime
+  cropId              String?
+  marketName          String?  // الحسبة/الدلال
+  quantityKg          Float?
+  grossFils           Int?     // الإجمالي
+  commissionFils      Int?     // العمولة
+  otherDeductionsFils Int?     // تنزيل/نقل
+  netFils             Int      // الصافي — REQUIRED
+  buyer               String?
+  note                String?
+  ledgerEntryId       String   @unique
+  createdAt           DateTime @default(now())
+  crop        Crop?       @relation(fields: [cropId], references: [id])
+  ledgerEntry LedgerEntry @relation(fields: [ledgerEntryId], references: [id], onDelete: Cascade)
+}
+
+model InventoryItem {
+  id                String  @id @default(cuid())
+  nameAr            String
+  unit              String  // "KG" | "L"
+  quantityOnHand    Float   @default(0)
+  lowStockThreshold Float?
+  isActive          Boolean @default(true)
+  transactions InventoryTransaction[]
+}
+
+model InventoryTransaction {
+  id               String   @id @default(cuid())
+  itemId           String
+  type             String   // "IN" | "OUT"
+  quantity         Float
+  date             DateTime
+  note             String?
+  relatedExpenseId String?
+  createdAt        DateTime @default(now())
+  item           InventoryItem @relation(fields: [itemId], references: [id])
+  relatedExpense Expense?      @relation(fields: [relatedExpenseId], references: [id])
+}
+
+model Employee {
+  id                String  @id @default(cuid())
+  name              String
+  payType           String  // "MONTHLY" | "DAILY"
+  monthlySalaryFils Int?
+  dailyRateFils     Int?
+  phone             String?
+  isActive          Boolean @default(true)
+  note              String?
+  salaryPayments SalaryPayment[]
+  advances       Advance[]
+}
+
+model SalaryPayment {
+  id            String   @id @default(cuid())
+  employeeId    String?
+  date          DateTime
+  amountFils    Int
+  periodLabel   String?  // "2026-06" or "قطاف العنب"
+  workersCount  Int?
+  note          String?
+  ledgerEntryId String   @unique
+  createdAt     DateTime @default(now())
+  employee    Employee?   @relation(fields: [employeeId], references: [id])
+  ledgerEntry LedgerEntry @relation(fields: [ledgerEntryId], references: [id], onDelete: Cascade)
+}
+
+model Advance {
+  id                String   @id @default(cuid())
+  employeeId        String
+  date              DateTime
+  amountFils        Int
+  isSettled         Boolean  @default(false)
+  settledAmountFils Int      @default(0)
+  note              String?
+  employee Employee @relation(fields: [employeeId], references: [id])
+}

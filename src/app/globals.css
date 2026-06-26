@@ -1,26 +1,206 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
+
+/*
+  مزارع أبو صبح — Design tokens ("Jordan Valley Citrus")
+  See docs/DESIGN.md for the full system. Light mode is the only supported mode in v1.
+  - Primary  = citrus-leaf green  #2E7D4F   (the dominant brand color)
+  - Signature = Valencia orange   #F08A24   (used ONLY on the cash-balance card + quick-add FAB)
+  - Background = pale leaf         #F6F8F1
+  shadcn semantic tokens are remapped to citrus below; the signature orange is intentionally
+  a SEPARATE token (--color-signature) so it never bleeds into shadcn hover/accent surfaces.
+*/
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-heading);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Brand tokens — generate utilities like bg-signature / text-income / bg-brand-tint */
+@theme {
+  --color-brand: #2e7d4f;
+  --color-brand-dark: #246340;
+  --color-brand-tint: #e4f0e8;
+  --color-signature: #f08a24;
+  --color-signature-dark: #d9760f;
+  --color-signature-foreground: #ffffff;
+  --color-income: #2e7d4f;
+  --color-expense: #c0492b;
+  --color-warning: #e0a52e;
+}
+
+:root {
+  --radius: 0.75rem;
+
+  /* fonts (set by next/font in src/app/layout.tsx) */
+  --font-sans: var(--font-tajawal), system-ui, "Segoe UI", sans-serif;
+  --font-heading: var(--font-cairo), var(--font-tajawal), system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Courier New", monospace;
+
+  /* surfaces */
+  --background: #f6f8f1; /* pale leaf */
+  --foreground: #1f2a22; /* ink */
+  --card: #ffffff;
+  --card-foreground: #1f2a22;
+  --popover: #ffffff;
+  --popover-foreground: #1f2a22;
+
+  /* primary = citrus-leaf green */
+  --primary: #2e7d4f;
+  --primary-foreground: #ffffff;
+
+  /* secondary / muted / accent stay quiet & green-tinted (NOT orange) */
+  --secondary: #e4f0e8;
+  --secondary-foreground: #246340;
+  --muted: #eef2ea;
+  --muted-foreground: #5b6b5e;
+  --accent: #e4f0e8;
+  --accent-foreground: #246340;
+
+  /* destructive = clay (matches the "expense/OUT" red) */
+  --destructive: #c0492b;
+
+  --border: #e2e8da;
+  --input: #d8e0cf;
+  --ring: #176b3e; /* high-contrast green focus ring */
+
+  /* charts — honest agricultural palette */
+  --chart-1: #2e7d4f; /* green */
+  --chart-2: #f08a24; /* orange */
+  --chart-3: #e0a52e; /* amber/wheat */
+  --chart-4: #c0492b; /* clay */
+  --chart-5: #246340; /* deep green */
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1f2a22;
+  --sidebar-primary: #2e7d4f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e4f0e8;
+  --sidebar-accent-foreground: #246340;
+  --sidebar-border: #e2e8da;
+  --sidebar-ring: #176b3e;
+}
+
+/* Dark theme is defined for completeness but NOT enabled in v1 (light mode only). */
+.dark {
+  --background: #14201a;
+  --foreground: #f1f5ee;
+  --card: #1b291f;
+  --card-foreground: #f1f5ee;
+  --popover: #1b291f;
+  --popover-foreground: #f1f5ee;
+  --primary: #4caf6e;
+  --primary-foreground: #0f1a12;
+  --secondary: #24332a;
+  --secondary-foreground: #e4f0e8;
+  --muted: #24332a;
+  --muted-foreground: #a7b8ab;
+  --accent: #24332a;
+  --accent-foreground: #e4f0e8;
+  --destructive: #e0673f;
+  --border: #2c3b30;
+  --input: #2c3b30;
+  --ring: #4caf6e;
+  --chart-1: #4caf6e;
+  --chart-2: #f08a24;
+  --chart-3: #e0a52e;
+  --chart-4: #d8694a;
+  --chart-5: #2e7d4f;
+  --sidebar: #1b291f;
+  --sidebar-foreground: #f1f5ee;
+  --sidebar-primary: #4caf6e;
+  --sidebar-primary-foreground: #0f1a12;
+  --sidebar-accent: #24332a;
+  --sidebar-accent-foreground: #e4f0e8;
+  --sidebar-border: #2c3b30;
+  --sidebar-ring: #4caf6e;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* comfortable, large, highly readable base for older users */
+    font-size: 1rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading;
+    line-height: 1.3;
+  }
+  /* Visible keyboard focus floor (in addition to shadcn rings). */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Tabular figures for money — keeps balance/amount columns aligned. */
+  .nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

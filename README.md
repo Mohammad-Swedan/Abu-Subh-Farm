@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# مزارع أبو صبح — Abu Subh Farms
 
-## Getting Started
+An **Arabic-first, fully RTL** farm-management web app for **مزارع أبو صبح**, built for an
+older, non-technical farm owner in Jordan. It tracks the day-to-day money of the farm —
+**expenses, sales (income), workers, and inventory** — in plain Arabic, with large touch
+targets and one calm, readable screen at a time.
 
-First, run the development server:
+Everything runs on a single **cash ledger**: every money movement creates a domain record
+**and** posts exactly one ledger entry, so the cash balance and all reports always reconcile.
+
+---
+
+## Stack
+
+- **Next.js 15** (App Router, `src/` dir) + **React 19** + **TypeScript** (strict)
+- **Prisma 6** + **SQLite** (portable to PostgreSQL / SQL Server later — provider + URL change only)
+- **Tailwind CSS v4** (CSS-first `@theme` in `src/app/globals.css`; no `tailwind.config.js`)
+- **shadcn/ui** style `base-nova` on **`@base-ui/react`**, **lucide-react** icons
+- **Zod 4**, **react-hook-form 7** (+ `@hookform/resolvers`)
+- **date-fns 4** (`ar` locale), **bcryptjs**, **recharts**, **sonner**, **tsx**
+
+Money is always integer **fils** (1 JOD = 1000 fils) — never floats. See
+[docs/CONVENTIONS.md](./docs/CONVENTIONS.md).
+
+---
+
+## Getting started
 
 ```bash
+# 1. Install dependencies
+npm install
+
+# 2. Create your environment file
+cp .env.example .env        # then review the values
+
+# 3. Create the database + run migrations
+npm run db:migrate
+
+# 4. Seed the owner, categories, crops, and demo data
+npm run db:seed
+
+# 5. Start the dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open the app and **log in** with the password from **`SEED_OWNER_PASSWORD`** in your
+`.env` (the seed default is `abusubh2026`). v1 auth is **single-owner, password-only**:
+the password is checked against the seeded user's bcrypt hash, and a signed HTTP-only
+session cookie protects the app routes. (Multi-user / NextAuth is the documented future path.)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> Edit `.env` before seeding if you want a different owner password. **Never commit `.env`**
+> (it is gitignored); `.env.example` is the committed template and documents the
+> sqlite / postgres / sqlserver connection-string shapes.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Database scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Script | What it does |
+| --- | --- |
+| `npm run db:migrate` | Create/apply a dev migration (`prisma migrate dev`) |
+| `npm run db:seed` | Seed owner, categories, crops, and demo rows (`tsx prisma/seed.ts`) |
+| `npm run db:reset` | Drop, re-migrate, and re-seed (`prisma migrate reset --force`) |
+| `npm run db:studio` | Open Prisma Studio to browse the data |
+| `npm run db:generate` | Regenerate the Prisma client |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Other scripts: `npm run dev`, `npm run build`, `npm run start`, `npm run lint`,
+`npm run typecheck`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Run order for the whole project
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This repo is built in three stages:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Foundation (this stage).** Schema, seed, shared libs (`money`, `result`, `enums`,
+   `dates`, `ledger`, `auth`), config, design system, shared + layout components, and these
+   docs. **Locked** once done.
+2. **The four feature teams build in parallel** — **Expenses, Income, Inventory,
+   Employees** — each in its **own git worktree**, each touching only its own
+   `src/features/<name>/**` and its own placeholder page. They coordinate only through the
+   shared Prisma models + the ledger service, so they don't collide.
+3. **Integration.** A final pass fills the **dashboard + reports** (cash balance, period
+   summaries, recharts) on top of the now-complete ledger data.
+
+### Parallel feature work with git worktrees
+
+Each feature team gets an isolated checkout so the four streams never step on each other:
+
+```bash
+git worktree add ../abu-subh-expenses  -b feat/expenses
+git worktree add ../abu-subh-income    -b feat/income
+git worktree add ../abu-subh-inventory -b feat/inventory
+git worktree add ../abu-subh-employees -b feat/employees
+```
+
+Because every team edits a **disjoint** set of files (its own feature folder + its own
+page) and never touches locked files, the branches merge back cleanly.
+
+---
+
+## Documentation
+
+| Doc | What's inside |
+| --- | --- |
+| [docs/CONVENTIONS.md](./docs/CONVENTIONS.md) | Stack, feature-folder layout, `Result<T>` pattern, Server Action pattern, money-as-fils, enums-as-unions, naming, the LOCKED files list |
+| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Layering (UI → actions → services → repositories → Prisma), the ledger journal + full service contract with worked examples, DB-portability rules |
+| [docs/DESIGN.md](./docs/DESIGN.md) | "Jordan Valley Citrus" palette, Cairo/Tajawal type, spacing/radius, older-user ergonomics, RTL rules, navigation map, the orange signature element |
+| [docs/FEATURE-CONTRACT.md](./docs/FEATURE-CONTRACT.md) | Step-by-step template every feature team follows, with service + action code sketches |
+
+**Feature teams:** start with [docs/FEATURE-CONTRACT.md](./docs/FEATURE-CONTRACT.md).
