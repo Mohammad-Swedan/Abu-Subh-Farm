@@ -14,6 +14,8 @@ export type SaleFilter = {
   start: Date;
   end: Date;
   cropId?: string;
+  /** Free-text search over market name + buyer + note (and crop name). */
+  q?: string;
 };
 
 /** Sales bucketed by calendar day (newest day first) for the grouped list. */

@@ -18,6 +18,8 @@ export type ExpenseFilter = {
   end: Date;
   categoryId?: string;
   scope?: Scope;
+  /** Free-text search over vendor + note (and category name). */
+  q?: string;
 };
 
 /** Expenses bucketed by calendar day (newest day first) for the grouped list. */

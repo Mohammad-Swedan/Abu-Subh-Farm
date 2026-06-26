@@ -1,16 +1,30 @@
 // Inventory repository — pure Prisma reads.
 // NO ledger logic, NO Result wrapping, NO "use server". Business rules live in the service.
+import { Prisma } from "@prisma/client";
 import type { InventoryItem } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import type { Unit } from "@/lib/enums";
 import { FERTILIZER_CATEGORY_NAME, HISTORY_LIMIT } from "../constants";
 import type { ItemWithHistory, ItemOption } from "../types";
 
+/** Active items, optionally filtered by a name search. */
+function buildItemWhere(q?: string): Prisma.InventoryItemWhereInput {
+  const where: Prisma.InventoryItemWhereInput = { isActive: true };
+  if (q) where.nameAr = { contains: q };
+  return where;
+}
+
 /** Active items, alphabetical, each with its recent IN/OUT history (+ linked purchase). */
-export async function listItems(): Promise<ItemWithHistory[]> {
+export async function listItems(opts?: {
+  q?: string;
+  skip?: number;
+  take?: number;
+}): Promise<ItemWithHistory[]> {
   return prisma.inventoryItem.findMany({
-    where: { isActive: true },
+    where: buildItemWhere(opts?.q),
     orderBy: { nameAr: "asc" },
+    skip: opts?.skip,
+    take: opts?.take,
     include: {
       transactions: {
         orderBy: [{ date: "desc" }, { createdAt: "desc" }],
@@ -19,6 +33,11 @@ export async function listItems(): Promise<ItemWithHistory[]> {
       },
     },
   });
+}
+
+/** Count active items matching the optional name search — drives pagination. */
+export async function countItems(q?: string): Promise<number> {
+  return prisma.inventoryItem.count({ where: buildItemWhere(q) });
 }
 
 /** Minimal active-item options for the buy/use pickers. */

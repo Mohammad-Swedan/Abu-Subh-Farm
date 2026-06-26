@@ -7,6 +7,7 @@ import { HandCoinsIcon, PlusIcon } from "lucide-react"
 import type { Employee } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
+import { SearchInput, Pagination } from "@/components/shared"
 import type { Period } from "@/lib/dates"
 
 import type {
@@ -34,6 +35,10 @@ export type EmployeesScreenProps = {
   advances: AdvanceWithEmployee[]
   period: Period
   advancesEnabled: boolean
+  paymentsPage: number
+  paymentsPageCount: number
+  advancesPage: number
+  advancesPageCount: number
   autoOpenAdd?: boolean
 }
 
@@ -46,6 +51,10 @@ export function EmployeesScreen({
   advances,
   period,
   advancesEnabled,
+  paymentsPage,
+  paymentsPageCount,
+  advancesPage,
+  advancesPageCount,
   autoOpenAdd,
 }: EmployeesScreenProps) {
   const router = useRouter()
@@ -136,6 +145,8 @@ export function EmployeesScreen({
           advances={advances}
           employees={employeeOptions}
           outstanding={outstanding}
+          page={advancesPage}
+          pageCount={advancesPageCount}
         />
       ) : null}
 
@@ -144,6 +155,7 @@ export function EmployeesScreen({
           {COPY.paymentsTitle}
         </h2>
         <PaymentFilterBar period={period} />
+        <SearchInput placeholder="ابحث في الأجور (الاسم، الفترة، الملاحظة)" />
         <PaymentsList
           payments={payments}
           totalFils={paymentsTotalFils}
@@ -151,6 +163,7 @@ export function EmployeesScreen({
           onDelete={handleDeletePayment}
           onAdd={openPayCreate}
         />
+        <Pagination page={paymentsPage} pageCount={paymentsPageCount} />
       </section>
 
       <EmployeeForm

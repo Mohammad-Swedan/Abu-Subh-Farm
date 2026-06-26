@@ -41,6 +41,7 @@ export function ExpenseFilterBar({
     (mutate: (params: URLSearchParams) => void) => {
       const params = new URLSearchParams(searchParams.toString())
       mutate(params)
+      params.delete("page") // any filter change returns to the first page
       const qs = params.toString()
       router.replace(qs ? `/expenses?${qs}` : "/expenses", { scroll: false })
     },

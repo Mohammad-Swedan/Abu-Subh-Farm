@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { FolderIcon, PlusIcon, RepeatIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { SearchInput, Pagination } from "@/components/shared"
 import type { Period } from "@/lib/dates"
 import type { Scope } from "@/lib/enums"
 
@@ -32,6 +33,8 @@ export type ExpensesScreenProps = {
   period: Period
   categoryId?: string
   scope?: Scope
+  page: number
+  pageCount: number
   autoOpenAdd?: boolean
 }
 
@@ -44,6 +47,8 @@ export function ExpensesScreen({
   period,
   categoryId,
   scope,
+  page,
+  pageCount,
   autoOpenAdd,
 }: ExpensesScreenProps) {
   const router = useRouter()
@@ -96,6 +101,8 @@ export function ExpensesScreen({
         scope={scope}
       />
 
+      <SearchInput placeholder="ابحث في المصاريف (المورّد، الملاحظة، التصنيف)" />
+
       <ExpenseList
         expenses={expenses}
         totalFils={totalFils}
@@ -103,6 +110,8 @@ export function ExpensesScreen({
         onDelete={handleDelete}
         onAdd={openCreate}
       />
+
+      <Pagination page={page} pageCount={pageCount} />
 
       <div className="grid grid-cols-2 gap-2">
         <Button

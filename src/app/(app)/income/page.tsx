@@ -1,8 +1,10 @@
 import { requireUser } from "@/lib/auth";
 import { PERIODS, type Period, getRange, type DateRange } from "@/lib/dates";
+import { parsePage, parseSearch, pageSlice, pageCountOf } from "@/lib/pagination";
 import { PageHeader } from "@/components/shared";
 import {
   listSales,
+  countSales,
   sumSalesNetFils,
   listActiveCrops,
 } from "@/features/income/server/income.repository";
@@ -41,6 +43,8 @@ export default async function IncomePage({
 
   const period = parsePeriod(first(sp[QP.period]));
   const cropId = first(sp[QP.crop]);
+  const q = parseSearch(first(sp.q));
+  const requestedPage = parsePage(first(sp.page));
   const autoOpenAdd = first(sp[QP.new]) === "1";
 
   let custom: DateRange | undefined;
@@ -51,13 +55,17 @@ export default async function IncomePage({
   }
 
   const { start, end } = getRange(period, new Date(), custom);
-  const filter: SaleFilter = { start, end, cropId };
+  const filter: SaleFilter = { start, end, cropId, q };
 
-  const [sales, totalFils, crops] = await Promise.all([
-    listSales(filter),
+  const [total, totalFils, crops] = await Promise.all([
+    countSales(filter),
     sumSalesNetFils(filter),
     listActiveCrops(),
   ]);
+
+  const { page, skip, take } = pageSlice(requestedPage, total);
+  const pageCount = pageCountOf(total);
+  const sales = await listSales(filter, { skip, take });
 
   return (
     <div className="space-y-4">
@@ -68,6 +76,8 @@ export default async function IncomePage({
         crops={crops}
         period={period}
         cropId={cropId}
+        page={page}
+        pageCount={pageCount}
         autoOpenAdd={autoOpenAdd}
       />
     </div>

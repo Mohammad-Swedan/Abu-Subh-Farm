@@ -35,4 +35,6 @@ export type OutstandingByEmployee = Record<string, number>;
 export type PaymentFilter = {
   start: Date;
   end: Date;
+  /** Free-text search over employee name + period label + note. */
+  q?: string;
 };

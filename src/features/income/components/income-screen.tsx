@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { PlusIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { SearchInput, Pagination } from "@/components/shared"
 import type { Period } from "@/lib/dates"
 
 import type { SaleWithRelations, CropOption } from "../types"
@@ -21,6 +22,8 @@ export type IncomeScreenProps = {
   crops: CropOption[]
   period: Period
   cropId?: string
+  page: number
+  pageCount: number
   autoOpenAdd?: boolean
 }
 
@@ -30,6 +33,8 @@ export function IncomeScreen({
   crops,
   period,
   cropId,
+  page,
+  pageCount,
   autoOpenAdd,
 }: IncomeScreenProps) {
   const router = useRouter()
@@ -75,6 +80,8 @@ export function IncomeScreen({
 
       <SaleFilterBar crops={crops} period={period} cropId={cropId} />
 
+      <SearchInput placeholder="ابحث في المبيعات (الحسبة، المشتري، الملاحظة)" />
+
       <SaleList
         sales={sales}
         totalFils={totalFils}
@@ -82,6 +89,8 @@ export function IncomeScreen({
         onDelete={handleDelete}
         onAdd={openCreate}
       />
+
+      <Pagination page={page} pageCount={pageCount} />
 
       <SaleForm
         open={formOpen}

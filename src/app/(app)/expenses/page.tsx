@@ -1,9 +1,11 @@
 import { requireUser } from "@/lib/auth";
 import { PERIODS, type Period, getRange, type DateRange } from "@/lib/dates";
 import { Scope } from "@/lib/enums";
+import { parsePage, parseSearch, pageSlice, pageCountOf } from "@/lib/pagination";
 import { PageHeader } from "@/components/shared";
 import {
   listExpenses,
+  countExpenses,
   sumExpensesFils,
   listExpenseCategories,
   listActiveCrops,
@@ -51,6 +53,8 @@ export default async function ExpensesPage({
   const period = parsePeriod(first(sp[QP.period]));
   const categoryId = first(sp[QP.category]);
   const scope = parseScope(first(sp[QP.scope]));
+  const q = parseSearch(first(sp.q));
+  const requestedPage = parsePage(first(sp.page));
   const autoOpenAdd = first(sp[QP.new]) === "1";
 
   let custom: DateRange | undefined;
@@ -61,15 +65,19 @@ export default async function ExpensesPage({
   }
 
   const { start, end } = getRange(period, new Date(), custom);
-  const filter: ExpenseFilter = { start, end, categoryId, scope };
+  const filter: ExpenseFilter = { start, end, categoryId, scope, q };
 
-  const [expenses, totalFils, categories, crops, recurring] = await Promise.all([
-    listExpenses(filter),
+  const [total, totalFils, categories, crops, recurring] = await Promise.all([
+    countExpenses(filter),
     sumExpensesFils(filter),
     listExpenseCategories(),
     listActiveCrops(),
     listRecurring(),
   ]);
+
+  const { page, skip, take } = pageSlice(requestedPage, total);
+  const pageCount = pageCountOf(total);
+  const expenses = await listExpenses(filter, { skip, take });
 
   return (
     <div className="space-y-4">
@@ -83,6 +91,8 @@ export default async function ExpensesPage({
         period={period}
         categoryId={categoryId}
         scope={scope}
+        page={page}
+        pageCount={pageCount}
         autoOpenAdd={autoOpenAdd}
       />
     </div>

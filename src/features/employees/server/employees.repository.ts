@@ -1,5 +1,6 @@
 // Employees repository — pure Prisma reads.
 // NO ledger logic, NO Result wrapping, NO "use server". Business rules live in the service.
+import { Prisma } from "@prisma/client";
 import type { Employee } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import type {
@@ -67,22 +68,47 @@ export async function listEmployeeOptions(): Promise<EmployeeOption[]> {
   }));
 }
 
-/** Salary payments in range (newest first), each with its (optional) named employee. */
+/** Build the shared payments where clause (DRY between list + sum + count). */
+function buildPaymentWhere(
+  filter: PaymentFilter,
+): Prisma.SalaryPaymentWhereInput {
+  const where: Prisma.SalaryPaymentWhereInput = {
+    date: { gte: filter.start, lte: filter.end },
+  };
+  if (filter.q) {
+    where.OR = [
+      { periodLabel: { contains: filter.q } },
+      { note: { contains: filter.q } },
+      { employee: { is: { name: { contains: filter.q } } } },
+    ];
+  }
+  return where;
+}
+
+/** Salary payments in range (+ optional search), newest first, with (optional) employee. */
 export async function listPayments(
   filter: PaymentFilter,
+  opts?: { skip?: number; take?: number },
 ): Promise<PaymentWithEmployee[]> {
   return prisma.salaryPayment.findMany({
-    where: { date: { gte: filter.start, lte: filter.end } },
+    where: buildPaymentWhere(filter),
     include: { employee: true },
     orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+    skip: opts?.skip,
+    take: opts?.take,
   });
+}
+
+/** Count payments matching the filter — drives pagination. */
+export async function countPayments(filter: PaymentFilter): Promise<number> {
+  return prisma.salaryPayment.count({ where: buildPaymentWhere(filter) });
 }
 
 /** Sum amountFils for payments in range. Returns 0 when there are none. */
 export async function sumPaymentsFils(filter: PaymentFilter): Promise<number> {
   const agg = await prisma.salaryPayment.aggregate({
     _sum: { amountFils: true },
-    where: { date: { gte: filter.start, lte: filter.end } },
+    where: buildPaymentWhere(filter),
   });
   return agg._sum.amountFils ?? 0;
 }
@@ -97,15 +123,39 @@ export async function getPaymentById(
   });
 }
 
+/** Build the advances where clause for an optional employee-name/note search. */
+function buildAdvanceWhere(q?: string): Prisma.AdvanceWhereInput {
+  if (!q) return {};
+  return {
+    OR: [
+      { note: { contains: q } },
+      { employee: { is: { name: { contains: q } } } },
+    ],
+  };
+}
+
 /**
- * All advances with their owning employee — unsettled first, then newest.
- * NOTE: the Advance model has no `createdAt`, so `id` is the stable tiebreaker.
+ * Advances with their owning employee (+ optional search) — unsettled first,
+ * then newest. NOTE: the Advance model has no `createdAt`, so `id` is the
+ * stable tiebreaker.
  */
-export async function listAdvances(): Promise<AdvanceWithEmployee[]> {
+export async function listAdvances(opts?: {
+  q?: string;
+  skip?: number;
+  take?: number;
+}): Promise<AdvanceWithEmployee[]> {
   return prisma.advance.findMany({
+    where: buildAdvanceWhere(opts?.q),
     include: { employee: true },
     orderBy: [{ isSettled: "asc" }, { date: "desc" }, { id: "desc" }],
+    skip: opts?.skip,
+    take: opts?.take,
   });
+}
+
+/** Count advances matching the optional search — drives pagination. */
+export async function countAdvances(q?: string): Promise<number> {
+  return prisma.advance.count({ where: buildAdvanceWhere(q) });
 }
 
 /** Remaining unsettled advance balance for one employee. */

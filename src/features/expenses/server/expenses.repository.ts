@@ -10,25 +10,40 @@ import type {
   RecurringWithCategory,
 } from "../types";
 
-/** Build the shared Prisma where clause from an ExpenseFilter (DRY between list + sum). */
+/** Build the shared Prisma where clause from an ExpenseFilter (DRY between list + sum + count). */
 function buildExpenseWhere(filter: ExpenseFilter): Prisma.ExpenseWhereInput {
   const where: Prisma.ExpenseWhereInput = {
     date: { gte: filter.start, lte: filter.end },
   };
   if (filter.categoryId !== undefined) where.categoryId = filter.categoryId;
   if (filter.scope !== undefined) where.scope = filter.scope;
+  if (filter.q) {
+    where.OR = [
+      { vendor: { contains: filter.q } },
+      { note: { contains: filter.q } },
+      { category: { is: { nameAr: { contains: filter.q } } } },
+    ];
+  }
   return where;
 }
 
-/** List expenses in range (+ optional category/scope), newest first, with relations. */
+/** List expenses in range (+ optional category/scope/search), newest first, with relations. */
 export async function listExpenses(
   filter: ExpenseFilter,
+  opts?: { skip?: number; take?: number },
 ): Promise<ExpenseWithRelations[]> {
   return prisma.expense.findMany({
     where: buildExpenseWhere(filter),
     include: { category: true, crop: true },
     orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+    skip: opts?.skip,
+    take: opts?.take,
   });
+}
+
+/** Count expenses matching the filter — drives pagination. */
+export async function countExpenses(filter: ExpenseFilter): Promise<number> {
+  return prisma.expense.count({ where: buildExpenseWhere(filter) });
 }
 
 /** Sum amountFils for the matching expenses. Returns 0 when there are none. */

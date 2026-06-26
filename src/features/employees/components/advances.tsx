@@ -29,7 +29,15 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet"
-import { MoneyInput, MoneyText, DateField, ConfirmDialog, FormError } from "@/components/shared"
+import {
+  MoneyInput,
+  MoneyText,
+  DateField,
+  ConfirmDialog,
+  FormError,
+  SearchInput,
+  Pagination,
+} from "@/components/shared"
 import { formatDateAr } from "@/lib/dates"
 import { formatJod } from "@/lib/money"
 
@@ -49,6 +57,8 @@ export type AdvancesProps = {
   advances: AdvanceWithEmployee[]
   employees: EmployeeOption[]
   outstanding: OutstandingByEmployee
+  page: number
+  pageCount: number
 }
 
 type AdvanceFormValues = {
@@ -230,7 +240,7 @@ function AddAdvanceSheet({
   )
 }
 
-export function Advances({ advances, employees }: AdvancesProps) {
+export function Advances({ advances, employees, page, pageCount }: AdvancesProps) {
   const router = useRouter()
   const [sheetOpen, setSheetOpen] = React.useState(false)
 
@@ -280,6 +290,12 @@ export function Advances({ advances, employees }: AdvancesProps) {
           ))}
         </div>
       ) : null}
+
+      <SearchInput
+        paramKey="aq"
+        pageKey="apage"
+        placeholder="ابحث في السُّلف (اسم العامل، الملاحظة)"
+      />
 
       {/* Advances list */}
       {advances.length === 0 ? (
@@ -345,6 +361,8 @@ export function Advances({ advances, employees }: AdvancesProps) {
           })}
         </div>
       )}
+
+      <Pagination page={page} pageCount={pageCount} pageKey="apage" />
 
       <AddAdvanceSheet
         open={sheetOpen}

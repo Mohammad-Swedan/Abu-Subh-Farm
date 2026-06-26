@@ -20,6 +20,7 @@ export function PaymentFilterBar({ period }: PaymentFilterBarProps) {
     (mutate: (params: URLSearchParams) => void) => {
       const params = new URLSearchParams(searchParams.toString())
       mutate(params)
+      params.delete("page") // changing the period returns the payments list to page 1
       const qs = params.toString()
       router.replace(qs ? `/employees?${qs}` : "/employees", { scroll: false })
     },

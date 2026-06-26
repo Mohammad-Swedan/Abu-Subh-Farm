@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { PlusIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { SearchInput, Pagination } from "@/components/shared"
 
 import type { ItemWithHistory, ItemOption } from "../types"
 import { COPY } from "../constants"
@@ -21,12 +22,16 @@ export type InventoryScreenProps = {
   items: ItemWithHistory[]
   itemOptions: ItemOption[]
   strictMode: boolean
+  page: number
+  pageCount: number
 }
 
 export function InventoryScreen({
   items,
   itemOptions,
   strictMode,
+  page,
+  pageCount,
 }: InventoryScreenProps) {
   const router = useRouter()
 
@@ -110,11 +115,15 @@ export function InventoryScreen({
 
       <StrictModeToggle strictMode={strictMode} />
 
+      <SearchInput placeholder="ابحث عن صنف بالاسم" />
+
       <ItemList
         items={items}
         onOpenItem={openHistory}
         onAddItem={openCreateItem}
       />
+
+      <Pagination page={page} pageCount={pageCount} />
 
       <BuyInputForm
         open={buyOpen}
