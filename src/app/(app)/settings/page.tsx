@@ -1,14 +1,17 @@
 import { LogOutIcon, UserIcon } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
+import { getPreferences } from "@/server/preferences";
 import { PageHeader } from "@/components/shared";
+import { SettingsPreferences } from "@/components/shared/settings";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { logoutAction } from "./actions";
 
-/** PLACEHOLDER settings — owner info + logout (real). */
+/** Settings — owner info, optional-feature preferences, and logout. */
 export default async function SettingsPage() {
   const user = await getCurrentUser();
+  const prefs = await getPreferences();
 
   return (
     <div className="space-y-6">
@@ -34,6 +37,11 @@ export default async function SettingsPage() {
           </Button>
         </form>
       </Card>
+
+      <SettingsPreferences
+        strictInventory={prefs.strictInventory}
+        advances={prefs.advances}
+      />
 
       <p className="text-muted-foreground text-sm">
         المزيد من الإعدادات (الفئات، المحاصيل، النسخ الاحتياطي) قيد الإنشاء.
